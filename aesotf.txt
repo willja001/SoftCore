@@ -1,0 +1,391 @@
+# AES Encryption (on-the-fly) for Soft Core Processor
+# Round keys computed on the fly
+# William Diehl
+# George Mason University
+# 12-31-2016
+#
+# memory map
+# 0x00 - 0x0F original secret key
+# secret key overwritten during round key scheduling
+# 0x10 - 0x1F - 16 bytes plaintext (Note: Ciphertext overwrites plaintext in this version)
+# 0x20 - 0x29 (32 - 41) Round Constants 1 to 10
+# 0x2A - 0x2D (42 - 45) g function memory (4 bytes)
+# 0x2E (46) tmp1
+# 0x2F (47) rcptr - pointer to current round constant
+# 0x30 (48) op1ptr - pointer to wrdxr operand 1 
+# 0x31 (49) op2ptr - pointer to wrdxr operand 2
+# 0x32 (50) keyptr - pointer to next subkey (k0 - k43)
+# 0x33 (51) wrptr - pointer to next wrdxr write
+# 0x34 (42) cntr - wrdxr counter
+# 0x35 (53) rndcnt - round counter (10 rounds)
+# 0x36 - 0x37 tmp2 - 3
+# 0x39 - 0x3F - reserved for stack
+# memory constants
+.equ key0 0x00
+.equ gptr 0x0D
+.equ gptrp1 0x0E
+.equ rcptr 0x2F
+.equ gmem 0x2A
+.equ op1ptr 0x30
+.equ op2ptr 0x31
+.equ keyptr 0x32
+.equ wrptr 0x33
+.equ cntr 0x34
+.equ rndcnt 0x35
+.equ tmp1 0x2E
+.equ tmp2 0x36
+.equ tmp3 0x37
+.equ ptext 0x10
+.equ s1 0x11
+.equ s2 0x12
+.equ s3 0x13
+.equ s5 0x15
+.equ s6 0x16
+.equ s7 0x17
+.equ s9 0x19
+.equ s10 0x1A
+.equ s11 0x1B
+.equ s13 0x1D
+.equ s14 0x1E
+.equ s15 0x1F
+# start and first add round key with initial key
+jsr AdRndKy
+jsr RndKyOtf
+.lbl lp4
+# main round
+jsr Sbytes
+jsr ShftRw
+jsr MxCl
+jsr AdRndKy
+jsr RndKyOtf
+mvi rndcnt, r0
+lds r0, r1
+dec r1
+sts r1, r0
+bzi lp4dne
+jmp lp4
+.lbl lp4dne
+jsr Sbytes
+jsr ShftRw
+jsr AdRndKy
+# ######## end of AES #############
+.end
+nop
+# ######### end ###########
+# ####### begin subroutines #######
+.lbl RndKyOtf
+# compute next round key on the fly after AdRndKy
+# key scheduler
+# always reinitialize keyptr and wrptr to 0x00
+mvi keyptr, r0
+mvi 0x00, r1
+sts r1, r0
+mvi wrptr, r0
+sts r1, r0
+# g function
+mvi gptr, r0
+mvi rcptr, r1
+lds r0, r2
+trf t0, r2
+lds r1, r3
+lds r3, r0
+xor r0, r2
+inc r3
+sts r3,r1
+mvi gmem, r1
+sts r2, r1
+inc r1
+# second word
+mvi gptrp1, r0
+lds r0, r2
+trf t0, r2
+sts r2, r1
+inc r1
+# third word
+inc r0
+lds r0, r2
+trf t0, r2
+sts r2, r1
+inc r1
+# fourth word
+dec r0
+dec r0
+dec r0
+lds r0, r2
+trf t0, r2
+sts r2, r1
+# end gfunc
+mvi keyptr, r2
+lds r2, r0
+mvi op1ptr, r1
+sts r0, r1
+inc r0
+inc r0
+inc r0
+inc r0
+sts r0, r2
+mvi gmem, r0
+mvi op2ptr, r1
+sts r0, r1
+# restore value of counter
+mvi 0x04, r0
+mvi cntr, r1
+sts r0, r1
+jsr wrdxr
+# restore value of counter
+mvi 0x04, r0
+mvi cntr, r1
+sts r0, r1
+jsr wrd1
+jsr wrdxr
+mvi 0x04, r0
+mvi cntr, r1
+sts r0, r1
+jsr wrd1
+jsr wrdxr
+mvi 0x04, r0
+mvi cntr, r1
+sts r0, r1
+jsr wrd1
+jsr wrdxr
+mvi 0x04, r0
+mvi cntr, r1
+sts r0, r1
+ret
+# ####### end of key scheduler #######
+.lbl wrd1
+mvi keyptr, r2
+lds r2, r0
+mvi op1ptr, r1
+sts r0, r1
+inc r0
+inc r0
+inc r0
+inc r0
+sts r0, r2
+mvi wrptr, r0
+lds r0, r0
+dec r0
+dec r0
+dec r0
+dec r0
+mvi op2ptr, r1
+sts r0, r1
+ret
+.lbl wrdxr
+mvi op2ptr, r2
+lds r2, r2
+mvi op1ptr, r3
+lds r3, r3
+.lbl wrdxrloop
+lds r3, r0
+inc r3
+lds r2, r1
+inc r2
+xor r0, r1
+mvi wrptr, r0
+lds r0, r0
+sts r1, r0
+inc r0
+mvi wrptr, r1
+sts r0, r1
+mvi cntr, r0
+lds r0, r1
+dec r1
+sts r1, r0
+bzi wrdxrdne
+jmp wrdxrloop
+.lbl wrdxrdne
+ret
+# subroutine AddRoundKey
+.lbl AdRndKy
+mvi ptext, r0
+mvi key0, r1
+mvi cntr, r2
+mvi 0x10, r3
+sts r3, r2
+.lbl lp1
+lds r0, r2
+lds r1, r3
+xor r2, r3
+sts r3, r0
+inc r0
+inc r1
+mvi cntr, r2
+lds r2, r3
+dec r3
+sts r3, r2
+bzi lp1end
+jmp lp1
+.lbl lp1end
+ret
+# subroutine SubBytes
+.lbl Sbytes
+mvi ptext, r0
+mvi 0x10, r2
+.lbl lp2
+lds r0, r1
+trf t0, r1
+sts r1, r0
+inc r0
+dec r2
+bzi lp2end
+jmp lp2
+.lbl lp2end
+ret
+# subroutine ShiftRows
+.lbl ShftRw
+# shift row 2
+mvi tmp1, r0
+mvi s1, r1
+lds r1, r2
+sts r2, r0
+mvi s5, r3
+lds r3, r2
+sts r2, r1
+mvi s9, r0
+lds r0, r2
+sts r2, r3
+mvi s13, r3
+lds r3, r2
+sts r2, r0
+mvi tmp1, r0
+lds r0, r2
+sts r2, r3
+# shift row 3
+mvi s2, r0
+mvi s10, r1
+lds r0, r2
+lds r1, r3
+sts r2, r1
+sts r3, r0
+mvi s6, r0
+mvi s14, r1
+lds r0, r2
+lds r1, r3
+sts r2, r1
+sts r3, r0
+# shift row 4
+mvi tmp1, r3
+mvi s15, r0
+lds r0, r1
+sts r1, r3
+mvi s11, r1
+lds r1, r2
+sts r2, r0
+mvi s7, r3
+lds r3, r2
+sts r2, r1
+mvi s3, r1
+lds r1, r0
+sts r0, r3
+mvi tmp1, r0
+lds r0, r0
+mvi s3, r1
+sts r0, r1
+ret
+# Subroutine MixColumns
+.lbl MxCl
+# initialize counter
+mvi cntr, r0
+mvi 0x04, r1
+sts r1, r0
+mvi ptext, r0
+mvi op1ptr, r1
+sts r0, r1
+.lbl lp3
+# 1st transformation
+lds r0, r1
+gf2 r1, r1
+inc r0
+lds r0, r2
+gf3 r2, r2
+xor r1, r2
+inc r0
+lds r0, r1
+xor r1, r2
+inc r0
+lds r0, r1
+xor r1, r2
+mvi tmp1, r3
+sts r2, r3
+# 2nd transformation
+mvi op1ptr, r0
+lds r0, r0
+lds r0, r1
+inc r0
+lds r0, r2
+gf2 r2, r2
+xor r1, r2
+inc r0
+lds r0, r1
+gf3 r1, r1
+xor r1, r2
+inc r0
+lds r0, r1
+xor r1, r2
+mvi tmp2, r3
+sts r2, r3
+# 3rd transformation
+mvi op1ptr, r0
+lds r0, r0
+lds r0, r1
+inc r0
+lds r0, r2
+xor r1, r2
+inc r0
+lds r0, r1
+gf2 r1, r1
+xor r1, r2
+inc r0
+lds r0, r1
+gf3 r1, r1
+xor r1, r2
+mvi tmp3, r3
+sts r2, r3
+# 4th transformation
+mvi op1ptr, r0
+lds r0, r0
+lds r0, r1
+inc r0
+lds r0, r2
+gf3 r1, r1
+xor r1, r2
+inc r0
+lds r0, r1
+xor r1, r2
+inc r0
+lds r0, r1
+gf2 r1, r1
+xor r1, r2
+# write temporary results into memory
+sts r2, r0
+dec r0
+mvi tmp3, r2
+lds r2, r3
+sts r3, r0
+dec r0
+mvi tmp2, r2
+lds r2, r3
+sts r3, r0
+dec r0
+mvi tmp1, r2
+lds r2, r3
+sts r3, r0
+# check counter to see if complete
+mvi cntr, r3
+lds r3, r2
+dec r2
+sts r2, r3
+bzi lp3end
+# update op1ptr to next 4 bytes
+mvi op1ptr, r1
+lds r1, r0
+inc r0
+inc r0
+inc r0
+inc r0
+sts r0, r1
+jmp lp3
+.lbl lp3end
+ret
