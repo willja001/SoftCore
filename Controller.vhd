@@ -13,9 +13,9 @@ ENTITY Controller IS
 
 PORT(
 
-   clk: in std_logic;
+        clk: in std_logic;
 	rst: in std_logic;
-   start : in std_logic;
+        start : in std_logic;
 	done : in std_logic;
 	progword : in std_logic_vector(7 downto 0);
 	SR : in std_logic_vector(7 downto 0);
@@ -68,10 +68,10 @@ BEGIN
 
 IF (rising_edge(clk)) THEN
 	if (rst = '1') then
-		PS <= x"8"; -- idle state
+	   PS <= x"8"; -- idle state
 	else
 	   donereg <= done;
-		opreg <= op;
+	   opreg <= op;
 	   PS <= NS;
 	END if;
 	  
@@ -160,7 +160,7 @@ outercase: case PS is
 			memwrite <= '1';
 			dinsel <= "0" & src;
 			dregsel <= "0" & dst;
-		   dextregsel <= "00" & dst(0);
+		        dextregsel <= "00" & dst(0);
 			PCsel <= "10";
 			PCen <= '1';
 			NS <= x"1";
@@ -365,7 +365,7 @@ outercase: case PS is
 		SPsel <= "10";
 		SPen <= '1';
 		PCabssel <= "10";
-     	PCsel <= "11";
+     	        PCsel <= "11";
 		PCen <= '1';
 		NS <= x"1";
 
