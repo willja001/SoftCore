@@ -26,7 +26,7 @@ entity Datapath is
 
 		-- ext data signals
 
-		extdaddr	 	: in std_logic_vector(15 downto 0);
+		extdaddr 	: in std_logic_vector(15 downto 0);
 		extdout		: out std_logic_vector(7 downto 0);
 		extdin		: in std_logic_vector(7 downto 0);
 		extprogin	: in std_logic_vector(7 downto 0);
@@ -39,7 +39,7 @@ entity Datapath is
 
 		extprogwrite	: in std_logic;
 		extmemwrite	: in std_logic;
-		extwrite : in std_logic;
+		extwrite        : in std_logic;
 		done		: out std_logic;
 
 		-- int control signals
@@ -63,7 +63,7 @@ entity Datapath is
 		PCabssel	: in std_logic_vector(1 downto 0);
 		PChighregsel	: in std_logic_vector(1 downto 0);
 		progword	: out std_logic_vector(7 downto 0);
-		SR_out	: out std_logic_vector(7 downto 0)
+		SR_out	        : out std_logic_vector(7 downto 0)
 		);
 
 end Datapath;
@@ -114,12 +114,12 @@ begin
 with rxsel select
     	rxnext <= ALUop1 when "000",			
 		  dout   when "001",			
-	     prog_out when "010",			
-	     ALU1out when "011",
+	          prog_out when "010",			
+	          ALU1out when "011",
 		  ALU2out when "100",
 		  TRFout when "101",
 		  ALU2xor when "110",
-	     ALUop1 when others;
+	          ALUop1 when others;
 
 r0en <= regwrite and r0dec;
 
@@ -173,7 +173,7 @@ with ALUop1sel select
 	ALUop1 <= r0 when "00",
 		   r1 when "01",
 		   r2 when "10",
-			r3 when "11",
+		   r3 when "11",
 		   r3 when others;
 
 -- dst
@@ -198,9 +198,9 @@ ALU1not <= not ALUop2;
 
 with ALUop1sel select
 	ALU1out <= ALU1inc when "00",
-		        ALU1dec when "01",
-		        ALU1not when "10",
-		        ALUop2 when others;
+		   ALU1dec when "01",
+		   ALU1not when "10",
+		   ALUop2 when others;
 
 -- ALU2
 
@@ -231,7 +231,7 @@ ALU2opsel <= prog_out(7 downto 4);
 rot_right: entity work.rotate_right(structural)
 	port map(
 		input => ALUop2,
-   	distance => ALUop1(2 downto 0),
+   	        distance => ALUop1(2 downto 0),
 		shift => ALU2opsel(0),
 		result => ALU2ror
 		);
@@ -265,17 +265,17 @@ gfmul : entity work.GF_mul(dataflow)
 
 with ALU2opsel select
 	ALU2out <= ALU2add when "0000",
-		       ALU2sub when "0001",
-		       ALU2and when "0010",
-		       ALU2lor when "0011",
-		       ALU2ror when "0100",
+		   ALU2sub when "0001",
+		   ALU2and when "0010",
+		   ALU2lor when "0011",
+		   ALU2ror when "0100",
      		   ALU2ror when "0101",
-		       ALU2rol when "0110",
-		       ALU2rol when "0111",
+		   ALU2rol when "0110",
+		   ALU2rol when "0111",
 --	           ALU2gf4 when "1000", -- optional for GF4 multiplication
-			   ALU2gf2 when "1001",
-			   ALU2gf3 when "1010",
-		       ALUop2 when others;
+		   ALU2gf2 when "1001",
+		   ALU2gf3 when "1010",
+		   ALUop2 when others;
 
 -- end ALU
 
@@ -293,9 +293,9 @@ Z_ALUin <= '1' when (SR_ALUin = 0) else '0';
 
 with SRsrcsel select
 	     Cnext <= '0' when "00",
-		  C_ALUin when "01",
-		  dout(2) when "10",
-		  '0' when others;
+		      C_ALUin when "01",
+		      dout(2) when "10",
+		      '0' when others;
 
 with SRsrcsel select
 	Nnext <= '0' when "00",
@@ -387,7 +387,7 @@ with SPsel select
 	SPin <= SPinit when "00",
 		SPinit when "01",
 		(SP + 1) when "10",
-	   (SP - 1) when "11",
+	        (SP - 1) when "11",
 		SPinit when others;
 
 store_SP: entity work.regn(behavioral)
@@ -404,13 +404,13 @@ SPpX <= (SP + 1) when (SPaddsel = '1') else (SP + 2);
 
 with dinsel select
 	ddin <= r0 when "000",
-           r1 when "001",
-           r2 when "010",
-			  r3 when "011",
-           SR when "100",
+                r1 when "001",
+                r2 when "010",
+	        r3 when "011",
+                SR when "100",
 	        (PC(7 downto 0) + 1) when "101",
-			  (x"0" & PC(11 downto 8)) when "111",
-		     x"00" when others;
+		(x"0" & PC(11 downto 8)) when "111",
+		x"00" when others;
 
 din <= ddin when (extwrite = '0') else extdin; -- external memory write
 we <= memwrite when (extwrite = '0') else extmemwrite;
@@ -427,12 +427,12 @@ with dregsel select
 
 with dextregsel select
 	ddaddru <= r1 when "000",
-              r3 when "001",
-              x"00" when "010",
-              x"00" when "011",
-		 SP(15 downto 8) when "100",
-		 SPpX(15 downto 8) when "110",
-		 x"00" when others;
+                   r3 when "001",
+                   x"00" when "010",
+                   x"00" when "011",
+		   SP(15 downto 8) when "100",
+		   SPpX(15 downto 8) when "110",
+		   x"00" when others;
 
 ddaddr <= ddaddru & ddaddrl;
  
@@ -444,7 +444,7 @@ dataMemory: entity work.DRAM(behavioral)
 	port map(
 			clk => clk,
 			we => we,
-	      di => din,
+	                di => din,
 			do => dout,
 			addr => daddr);
 
@@ -479,10 +479,10 @@ PCbxx <= PC(11 downto 8) & PCabsl;
 
 with PCsel select
 	PCnext <= startloc when "00",
-             PCbxx when "01",
-				 (PC + 1) when "10",
-             PCabs when "11",
-				 (PC + 1) when others;
+                  PCbxx when "01",
+		 (PC + 1) when "10",
+                 PCabs when "11",
+		 (PC + 1) when others;
 
 store_PC: entity work.regn(behavioral)
 	generic map(n=>12)
@@ -504,7 +504,7 @@ progMemory: entity work.DRAM(behavioral)
 	port map(
 		clk => clk,
 		we => extprogwrite, -- program memory cannot be written inside softcore
-	   di => extprogin, 
+	        di => extprogin, 
 		do => next_prog_out,  
 		addr => paddr);
 
