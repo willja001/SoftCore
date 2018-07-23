@@ -31,11 +31,7 @@ CONSTANT memory : vector_array :=
 
 x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
-
--- test with fobos loader
---x"01",x"02",x"03",x"04",x"05",x"06",x"07",x"08",
---x"09",x"0A",x"0B",x"0C",x"0D",x"0E",x"0F",x"10",
-
+		
 --0x10 - 0x1F - 16 bytes plaintext (Note: Ciphertext overwrites plaintext in this version)
 
 x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
