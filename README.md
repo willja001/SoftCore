@@ -12,7 +12,10 @@ I. Contents:
 5. Simulator SoftSim.py
 6. Reference Manual
 
-II. Limitations: Assembler and Simulator verified in Windows 8; Does not function correctly in LINUX
+II. Limitations:
+1. Assembler and Simulator verified in Windows 8; Does not function correctly in LINUX
+2. Assembler and Simulator (SoftSim.py) compatible with Python 2.X; not compatible with Python 3.X
+3. Simulator (SoftSim_3_7.py) compatible with Python 3.X; tested in Python 3.7
 
 III. Quick Start Guide:
 
